@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="limited" default="false"/>
+    <arg name="paused" default="true"/>
+    <arg name="gui" default="true"/>
+    <arg name="world" default="worlds/empty.world"/>
+    <arg name="x"   default="0.0"/>
+    <arg name="y"   default="0.0"/>
+    <arg name="z"   default="0.0"/>
+    
+    <param name="use_sim_time" value="true" />
+
+    <!-- send robot urdf to param server -->
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '/home/pi/quadruped_ws/quadruped.urdf.xacro'" />
+	
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen" >
+        <param name="publish_frequency" type="double" value="20.0" />
+        <param name="tf_prefix" value=""/>
+    </node>
+
+    <!-- startup simulated world -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(arg world)"/>
+        <arg name="paused" value="$(arg paused)"/>
+        <arg name="gui" value="$(arg gui)"/>
+    </include>
+
+    <!-- push robot_description to factory and spawn robot in gazebo -->
+    <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model quadruped -x $(arg x) -y $(arg y) -z $(arg z)" respawn="false" output="screen" />
+  
+    <rosparam file="/home/pi/quadruped_ws/joint_state_controller.yaml" command="load"/>
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" args="joint_state_controller my_joint_position_controller" output="screen"/>
+ 
+
+</launch>

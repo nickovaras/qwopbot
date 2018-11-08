@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO</title>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+var socket = io();
+
+window.onkeypress = function(evt){
+   console.log(evt);
+   socket.emit("keypressed", evt.key);
+}
+
+window.onkeyup = function(evt){
+   console.log(evt);
+   socket.emit("keyreleased", evt.key);
+}
+
+</script>
+  </head>
+  <body>
+    <h1>Control Quadruped with qawsedrfyhujikol keys</h1>
+  </body>
+</html>

@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+<robot name="quadruped" xmlns:xacro="http://ros.org/wiki/xacro">
+  
+    <xacro:property name="M_PI" value="3.14159"/>
+
+    <gazebo>
+	<plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so"> 
+	    <robotNamespace>/</robotNamespace>
+	    </plugin>
+	</gazebo>
+
+    <xacro:property name="body_length" value="1.0" />
+    <xacro:property name="body_width" value="0.5" />
+    <xacro:property name="body_height" value="0.2" />
+    <xacro:property name="leg_section_length" value="0.5" />
+    <xacro:property name="leg_section_width" value="0.1" />
+    <xacro:property name="leg_section_length" value="0.5" />
+
+
+    <link name="base_link"/>
+		        
+    <joint name="base_chassis_joint" type="fixed">
+            <origin xyz="0 0 ${leg_section_length * 2 +body_height/2}" rpy="0 0 0" />
+            <parent link="base_link" />
+            <child link="body_link" />
+    </joint>
+
+    <link name="body_link">
+	    	<inertial>
+		    <mass value="5.0" />
+		    <origin xyz="-0.000710 -0.000186 0.5" rpy="0 0 0"/>
+		    <inertia ixx="3.126061"  ixy="-0.032687" ixz="-0.086662"
+                         iyx="-0.032687" iyy="13.356772" iyz="0.000468"
+                         izx="-0.086662" izy="0.000468"  izz="15.218700" />
+	    	</inertial>
+		<collision>
+		    <geometry>
+			<box size="${body_length} ${body_width} ${body_height}" />				    
+		    </geometry>		
+		</collision>
+		<visual>
+		    <origin xyz="0 0 0" rpy="0 0 0" />
+		    <geometry>
+			<box size="${body_length} ${body_width} ${body_height}" />				    
+		    </geometry>
+		</visual>
+     </link>
+		
+     <gazebo reference="body_link">
+			<mu1 value="0.3"/>
+			<mu2 value="0.3"/>
+			<kp value="10000000.0" />
+			<kd value="1.0" />
+			<fdir1 value="1 0 0"/>
+     </gazebo>
+
+    <xacro:macro name="leg" params="prefix longitudinal_reflect traverse_reflect">    
+        
+        <joint name="${prefix}_hip_joint" type="continuous">
+            <origin xyz="${longitudinal_reflect*body_length/2} ${traverse_reflect*(body_width + leg_section_width)/2} ${-body_height/2}" rpy="0 0 ${traverse_reflect*1.57}" />
+            <parent link="body_link" />
+            <child link="${prefix}_upper_leg" />
+        </joint>
+
+	<transmission name="simple_trans">
+	  <type>transmission_interface/SimpleTransmission</type>
+  	  <joint name="${prefix}_hip_joint">
+    		<hardwareInterface>EffortJointInterface</hardwareInterface>
+	  </joint>
+  	  <actuator name="${prefix}_hip_motor">
+    	     <mechanicalReduction>1</mechanicalReduction>
+    	     <hardwareInterface>EffortJointInterface</hardwareInterface>
+  	 </actuator>
+        </transmission>
+        
+        <link name="${prefix}_upper_leg">
+		<inertial>
+		    <mass value="1.0" />
+		    <inertia ixx="0.115329"  ixy="-0.000009" ixz="0.000007"
+                             iyx="-0.000009"  iyy="0.194172" iyz="0.000002"
+                             izx="0.000007" izy="0.000002" izz="0.309399" />
+		    </inertial>
+	         <collision>
+		    <origin xyz="0 0 ${-leg_section_length/2}" rpy="0 0 0" />
+		    <geometry>
+				<box size="0.1 0.1 ${leg_section_length}" />				    
+		    </geometry>
+		</collision>
+		<visual>
+                    <origin xyz="0 0 ${-leg_section_length/2}" rpy="0 0 0" />
+		    <geometry>
+			<box size="0.1 0.1 ${leg_section_length}" />				    
+		    </geometry>
+		</visual>
+	</link>
+        <gazebo reference="${prefix}_upper_leg">
+		<mu1 value="0.3"/>
+		<mu2 value="0.3"/>
+		<kp value="10000000.0" />
+		<kd value="1.0" />
+		<fdir1 value="1 0 0"/>
+        </gazebo>
+
+        <joint name="${prefix}_knee_joint" type="continuous">
+            <origin xyz="0 0 ${-leg_section_length}" rpy="0 0 0" />
+            <parent link="${prefix}_upper_leg" />
+            <child link="${prefix}_lower_leg" />
+        </joint>
+
+	<transmission name="simple_trans">
+	  <type>transmission_interface/SimpleTransmission</type>
+  	  <joint name="${prefix}_knee_joint">
+    		<hardwareInterface>EffortJointInterface</hardwareInterface>
+	  </joint>
+  	  <actuator name="${prefix}_knee_motor">
+    	     <mechanicalReduction>1</mechanicalReduction>
+    	     <hardwareInterface>EffortJointInterface</hardwareInterface>
+  	 </actuator>
+        </transmission>
+
+        <link name="${prefix}_lower_leg">
+		<inertial>
+		    <mass value="1.0" />
+		    <inertia ixx="0.115329"  ixy="-0.000009" ixz="0.000007"
+                             iyx="-0.000009"  iyy="0.194172" iyz="0.000002"
+                             izx="0.000007" izy="0.000002" izz="0.309399" />
+		    </inertial>
+	         <collision>
+		    <origin xyz="0 0 ${-leg_section_length/2}" rpy="0 0 0" />
+		    <geometry>
+		        <box size="0.1 0.1 ${leg_section_length}" />				    
+		    </geometry>
+		</collision>
+		<visual>
+                    <origin xyz="0 0 ${-leg_section_length/2}" rpy="0 0 0" />
+		    <geometry>
+			<box size="0.1 0.1 ${leg_section_length}" />				    
+		    </geometry>
+		</visual>
+	</link>	
+
+    </xacro:macro>
+
+    <xacro:leg prefix="forward_right" longitudinal_reflect="1"  traverse_reflect="1"  />
+    <xacro:leg prefix="forward_left"  longitudinal_reflect="1"  traverse_reflect="-1" />
+    <xacro:leg prefix="rear_right"    longitudinal_reflect="-1" traverse_reflect="1"  />
+    <xacro:leg prefix="rear_left"     longitudinal_reflect="-1" traverse_reflect="-1" />
+</robot>
